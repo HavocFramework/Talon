@@ -1,7 +1,8 @@
 from base64 import b64decode
-
 from havoc.service import HavocService
 from havoc.agent import *
+
+import os
 
 COMMAND_REGISTER         = 0x100
 COMMAND_GET_JOB          = 0x101
@@ -118,7 +119,7 @@ class CommandExit( Command ):
 # =======================
 class Talon(AgentType):
     Name = "Talon"
-    Author = "@C5pider"
+    Author = "@C5pider + 0xtriboulet"
     Version = "0.1"
     Description = f"""Talon 3rd party agent for Havoc"""
     MagicValue = 0x616c6f6e # 'talon'
@@ -156,8 +157,14 @@ class Talon(AgentType):
         self.builder_send_message( config[ 'ClientID' ], "Info", f"Options Config: {config['Options']}" )
         self.builder_send_message( config[ 'ClientID' ], "Info", f"Agent Config: {config['Config']}" )
 
+	# make and cmake
+        os.system("cmake . && make")
+	
+	# open .exe
+        data = open("./Bin/Talon.exe", "rb").read()
+	
         # build_send_payload. this function send back your generated payload 
-        self.builder_send_payload( config[ 'ClientID' ], self.Name + ".bin", "test bytes".encode('utf-8') ) # this is just an example. 
+        self.builder_send_payload( config[ 'ClientID' ], self.Name + ".exe", data) # this is just an example. 
 
     # this function handles incomming requests based on our magic value. you can respond to the agent by returning your data from this function. 
     def response( self, response: dict ) -> bytes:
@@ -294,7 +301,7 @@ def main():
 
     print( "[*] Connect to Havoc service api" )
     Havoc_Service = HavocService(
-        endpoint="ws://192.168.0.148:40056/service-endpoint",
+        endpoint="wss://127.0.0.1:40056/service-endpoint",
         password="service-password"
     )
      

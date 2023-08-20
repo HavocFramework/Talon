@@ -4,13 +4,8 @@ project( Talon C )
 set( CMAKE_C_STANDARD 99 )
 set( CMAKE_C_COMPILER x86_64-w64-mingw32-gcc )
 
-include_directories( Include )
+include_directories(Include)
+file(GLOB SOURCES "Source/*")
 
-add_executable( Agent
-    Source/Main.c
-    Source/Command.c
-    Source/Core.c
-    Source/Package.c
-    Source/Transport.c
-    Source/Parser.c
-)
+add_executable(Agent ${SOURCES})
+target_link_libraries( Agent iphlpapi winhttp )
