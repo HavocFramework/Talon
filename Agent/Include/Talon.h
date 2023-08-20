@@ -20,12 +20,12 @@
 #define PROCESS_AGENT_ARCH PROCESS_ARCH_X86
 #endif
 
-#define TALON_MAGIC_VALUE ( UINT32 ) 'talon'
+#define TALON_MAGIC_VALUE ( UINT32 ) 'taln'
 
 typedef struct _INSTANCE {
     struct {
         UINT32  AgentID;
-
+        WORD    ProcArch;
         DWORD   OSArch;
         BOOL    Connected;
     } Session;
@@ -37,11 +37,13 @@ typedef struct _INSTANCE {
 
     struct {
         DWORD Sleeping;
-
+        DWORD Jitter;
         struct {
             LPWSTR UserAgent;
             LPWSTR Host;
             DWORD  Port;
+            UINT64 KillDate;
+            UINT32 WorkingHours;
 
             BOOL   Secure;
         } Transport ;

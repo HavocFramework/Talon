@@ -13,5 +13,5 @@ set_target_properties(Talon PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/../Bin)
 
 
-target_compile_options(Talon PRIVATE -s -O2 )
+target_compile_options(Talon PRIVATE -s )
 target_link_libraries( Talon iphlpapi winhttp )

