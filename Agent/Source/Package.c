@@ -30,21 +30,16 @@ VOID Int64ToBuffer( PUCHAR Buffer, UINT64 Value )
     Buffer[ 0 ] = Value & 0xFF;
 }
 
-VOID Int32ToBuffer( PUCHAR Buffer, UINT32 Size )
-{
+VOID Int32ToBuffer( PUCHAR Buffer, UINT32 Size ) {
     ( Buffer ) [ 0 ] = ( Size >> 24 ) & 0xFF;
     ( Buffer ) [ 1 ] = ( Size >> 16 ) & 0xFF;
     ( Buffer ) [ 2 ] = ( Size >> 8  ) & 0xFF;
     ( Buffer ) [ 3 ] = ( Size       ) & 0xFF;
 }
 
-VOID PackageAddInt32( PPACKAGE Package, UINT32 dataInt )
-{
-    Package->Buffer = LocalReAlloc(
-            Package->Buffer,
-            Package->Length + sizeof( UINT32 ),
-            LMEM_MOVEABLE
-    );
+VOID PackageAddInt32( PPACKAGE Package, UINT32 dataInt ) {
+
+    Package->Buffer = LocalReAlloc(Package->Buffer,Package->Length + sizeof( UINT32 ),LMEM_MOVEABLE);
 
     Int32ToBuffer( Package->Buffer + Package->Length, dataInt );
 
@@ -81,15 +76,10 @@ VOID PackageAddPad( PPACKAGE Package, PUCHAR Data, SIZE_T Size )
 }
 
 
-VOID PackageAddBytes( PPACKAGE Package, PUCHAR Data, SIZE_T Size )
-{
+VOID PackageAddBytes( PPACKAGE Package, PUCHAR Data, SIZE_T Size ) {
     PackageAddInt32( Package, Size );
 
-    Package->Buffer = LocalReAlloc(
-            Package->Buffer,
-            Package->Length + Size,
-            LMEM_MOVEABLE | LMEM_ZEROINIT
-    );
+    Package->Buffer = LocalReAlloc(Package->Buffer,Package->Length + Size,LMEM_MOVEABLE | LMEM_ZEROINIT);
 
     Int32ToBuffer( Package->Buffer + ( Package->Length - sizeof( UINT32 ) ), Size );
 
@@ -108,7 +98,7 @@ PPACKAGE PackageCreate( UINT32 CommandID )
     Package->Buffer    = LocalAlloc( LPTR, sizeof( BYTE ) );
     Package->Length    = 0;
     Package->CommandID = CommandID;
-    Package->Encrypt   = TRUE;
+    Package->Encrypt   = FALSE;
 
     PackageAddInt32( Package, 0 );
     PackageAddInt32( Package, TALON_MAGIC_VALUE );
@@ -136,12 +126,12 @@ PPACKAGE PackageNew(  )
 
 VOID PackageDestroy( PPACKAGE Package )
 {
-    if ( ! Package )
+    if ( ! Package ) {
         return;
-
-    if ( ! Package->Buffer )
+    }
+    if ( ! Package->Buffer ) {
         return;
-
+    }
     memset( Package->Buffer, 0, Package->Length );
     LocalFree( Package->Buffer );
     Package->Buffer = NULL;
@@ -160,8 +150,9 @@ BOOL PackageTransmit( PPACKAGE Package, PVOID* Response, PSIZE_T Size )
         // writes package length to buffer
         Int32ToBuffer( Package->Buffer, Package->Length - sizeof( UINT32 ) );
 
-        if ( TransportSend( Package->Buffer, Package->Length, Response, Size ) )
+        if ( TransportSend( Package->Buffer, Package->Length, Response, Size ) ) {
             Success = TRUE;
+        }
 
         PackageDestroy( Package );
     }

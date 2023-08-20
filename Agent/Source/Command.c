@@ -99,7 +99,7 @@ VOID CommandShell( PPARSER Parser )
     SECURITY_ATTRIBUTES SecurityAttr    = { sizeof( SECURITY_ATTRIBUTES ), NULL, TRUE };
     STARTUPINFOA        StartUpInfoA    = { };
 
-    Command = ParserGetBytes( Parser, &Length );
+    Command = ParserGetBytes( Parser, (PUINT32) &Length );
 
     if ( CreatePipe( &hStdInPipeRead, &hStdInPipeWrite, &SecurityAttr, 0 ) == FALSE )
     {
@@ -179,7 +179,7 @@ VOID CommandDownload( PPARSER Parser )
     DWORD    FileSize = 0;
     DWORD    Read     = 0;
     DWORD    NameSize = 0;
-    PCHAR    FileName = ParserGetBytes( Parser, &NameSize );
+    PCHAR    FileName = ParserGetBytes( Parser, (PUINT32) &NameSize );
     HANDLE   hFile    = NULL;
     PVOID    Content  = NULL;
 
